@@ -101,26 +101,26 @@ station_data = [
     {
         "Station": "03",
         "Location": "Compressor exit / combustor inlet",
-        "T0 [K]": results["T03_K"],
-        "P0 [kPa]": results["P03_kPa"],
+        "Temperature [K]": results["T03_K"],
+        "Pressure [kPa]": results["P03_kPa"],
     },
     {
         "Station": "04",
         "Location": "Combustor exit / turbine inlet",
-        "T0 [K]": results["T04_K"],
-        "P0 [kPa]": results["P04_kPa"],
+        "Temperature [K]": results["T04_K"],
+        "Pressure [kPa]": results["P04_kPa"],
     },
     {
         "Station": "05",
         "Location": "Turbine exit / nozzle inlet",
-        "T0 [K]": results["T05_K"],
-        "P0 [kPa]": results["P05_kPa"],
+        "Temperature [K]": results["T05_K"],
+        "Pressure [kPa]": results["P05_kPa"],
     },
     {
         "Station": "09",
         "Location": "Nozzle exit",
-        "T0 [K]": results["T9_K"],
-        "P0 [kPa]": results["P9_kPa"],
+        "Temperature [K]": results["T9_K"],
+        "Pressure [kPa]": results["P9_kPa"],
     },
 ]
 
