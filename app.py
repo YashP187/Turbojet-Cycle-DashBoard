@@ -95,8 +95,8 @@ station_data = [
     {
         "Station": "02",
         "Location": "Compressor inlet",
-        "T0 [K]": results["T02_K"],
-        "P0 [kPa]": results["P02_kPa"],
+        "Temperature [K]": results["T02_K"],
+        "Pressure [kPa]": results["P02_kPa"],
     },
     {
         "Station": "03",
