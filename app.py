@@ -12,7 +12,11 @@ st.set_page_config(
 
 st.title("🚀 Turbojet Cycle Dashboard")
 st.caption("Single-spool Brayton-cycle calculator with thrust, nozzle, and sensitivity checks.")
-
+st.warning(
+    "This is a 1D cycle model for preliminary design and sensitivity analysis. "
+    "It does not replace CFD, compressor maps, structural analysis, rotor dynamics, "
+    "or experimental validation."
+)
 
 # Sidebar inputs
 st.sidebar.header("Engine Inputs")
@@ -66,7 +70,52 @@ col6.metric("P05 [kPa]", f"{results['P05_kPa']:.1f}")
 col7.metric("Required A9 [cm²]", f"{results['A9_required_m2'] * 1e4:.2f}")
 col8.metric("A9 drift [%]", f"{results['A9_drift_percent']:.2f}")
 
+# ============================================================
+# Design Point Comparison
+# ============================================================
 
+st.subheader("Design-Point Comparison")
+
+design_comparison_data = [
+    {
+        "Quantity": "Thrust",
+        "Frozen Design": 790.0,
+        "Current Model": results["gross_thrust_N"],
+        "Units": "N",
+    },
+    {
+        "Quantity": "T05",
+        "Frozen Design": 834.7,
+        "Current Model": results["T05_K"],
+        "Units": "K",
+    },
+    {
+        "Quantity": "P05",
+        "Frozen Design": 154.8,
+        "Current Model": results["P05_kPa"],
+        "Units": "kPa",
+    },
+    {
+        "Quantity": "NPR",
+        "Frozen Design": 1.53,
+        "Current Model": results["NPR_P05_over_Pamb"],
+        "Units": "-",
+    },
+]
+
+design_df = pd.DataFrame(design_comparison_data)
+
+design_df["Difference"] = design_df["Current Model"] - design_df["Frozen Design"]
+design_df["Difference [%]"] = (
+    design_df["Difference"] / design_df["Frozen Design"] * 100.0
+)
+
+design_df["Frozen Design"] = design_df["Frozen Design"].round(3)
+design_df["Current Model"] = design_df["Current Model"].round(3)
+design_df["Difference"] = design_df["Difference"].round(3)
+design_df["Difference [%]"] = design_df["Difference [%]"].round(2)
+
+st.dataframe(design_df, use_container_width=True)
 # Engineering checks
 st.subheader("Engineering Checks")
 
@@ -163,7 +212,10 @@ work_df = pd.DataFrame(work_data)
 st.dataframe(work_df, use_container_width=True)
 
 
-# Sensitivity sweeps
+# ============================================================
+# Sensitivity Sweeps
+# ============================================================
+
 st.subheader("Sensitivity Sweeps")
 
 if st.button("Run Sensitivity Sweeps"):
@@ -171,6 +223,7 @@ if st.button("Run Sensitivity Sweeps"):
     sweep_rows = run_all_sweeps(inputs, fixed_A9)
     sweep_df = pd.DataFrame(sweep_rows)
 
+    st.markdown("### Full Sensitivity Sweep Table")
     st.dataframe(sweep_df, use_container_width=True)
 
     st.download_button(
@@ -180,8 +233,44 @@ if st.button("Run Sensitivity Sweeps"):
         mime="text/csv"
     )
 
-    st.subheader("Thrust by Sweep Case")
-    st.bar_chart(sweep_df, x="swept_variable", y="thrust_N")
+    st.markdown("---")
+    st.markdown("### Sensitivity Plots")
+
+    # Create filtered dataframes for each variable
+    eta_c_df = sweep_df[sweep_df["swept_variable"] == "eta_c"].copy()
+    eta_tt_df = sweep_df[sweep_df["swept_variable"] == "eta_tt"].copy()
+    tit_df = sweep_df[sweep_df["swept_variable"] == "TIT_T04"].copy()
+    combustor_loss_df = sweep_df[sweep_df["swept_variable"] == "combustor_pressure_loss"].copy()
+
+    # Plot 1: Thrust vs Compressor Efficiency
+    st.markdown("#### Thrust vs Compressor Efficiency")
+    eta_c_plot = eta_c_df.set_index("swept_value")[["thrust_N"]]
+    eta_c_plot = eta_c_plot.rename(columns={"thrust_N": "Thrust [N]"})
+    st.line_chart(eta_c_plot)
+
+    # Plot 2: Thrust vs Turbine Efficiency
+    st.markdown("#### Thrust vs Turbine Efficiency")
+    eta_tt_plot = eta_tt_df.set_index("swept_value")[["thrust_N"]]
+    eta_tt_plot = eta_tt_plot.rename(columns={"thrust_N": "Thrust [N]"})
+    st.line_chart(eta_tt_plot)
+
+    # Plot 3: Thrust vs Turbine Inlet Temperature
+    st.markdown("#### Thrust vs Turbine Inlet Temperature")
+    tit_plot = tit_df.set_index("swept_value")[["thrust_N"]]
+    tit_plot = tit_plot.rename(columns={"thrust_N": "Thrust [N]"})
+    st.line_chart(tit_plot)
+
+    # Plot 4: A9 Drift vs Compressor Efficiency
+    st.markdown("#### A9 Drift vs Compressor Efficiency")
+    a9_eta_c_plot = eta_c_df.set_index("swept_value")[["A9_drift_percent"]]
+    a9_eta_c_plot = a9_eta_c_plot.rename(columns={"A9_drift_percent": "A9 Drift [%]"})
+    st.line_chart(a9_eta_c_plot)
+
+    # Plot 5: NPR vs Combustor Pressure Loss
+    st.markdown("#### NPR vs Combustor Pressure Loss")
+    npr_combustor_plot = combustor_loss_df.set_index("swept_value")[["NPR"]]
+    npr_combustor_plot = npr_combustor_plot.rename(columns={"NPR": "Nozzle Pressure Ratio"})
+    st.line_chart(npr_combustor_plot)
 
 
 # Assumptions
