@@ -242,35 +242,52 @@ if st.button("Run Sensitivity Sweeps"):
     tit_df = sweep_df[sweep_df["swept_variable"] == "TIT_T04"].copy()
     combustor_loss_df = sweep_df[sweep_df["swept_variable"] == "combustor_pressure_loss"].copy()
 
+    # Make sure numeric columns are actually numeric
+    for df in [eta_c_df, eta_tt_df, tit_df, combustor_loss_df]:
+        df["swept_value"] = pd.to_numeric(df["swept_value"])
+        df["thrust_N"] = pd.to_numeric(df["thrust_N"])
+        df["A9_drift_percent"] = pd.to_numeric(df["A9_drift_percent"])
+        df["NPR"] = pd.to_numeric(df["NPR"])
+
     # Plot 1: Thrust vs Compressor Efficiency
     st.markdown("#### Thrust vs Compressor Efficiency")
-    eta_c_plot = eta_c_df.set_index("swept_value")[["thrust_N"]]
-    eta_c_plot = eta_c_plot.rename(columns={"thrust_N": "Thrust [N]"})
-    st.line_chart(eta_c_plot)
+    st.line_chart(
+        eta_c_df,
+        x="swept_value",
+        y="thrust_N"
+    )
 
     # Plot 2: Thrust vs Turbine Efficiency
     st.markdown("#### Thrust vs Turbine Efficiency")
-    eta_tt_plot = eta_tt_df.set_index("swept_value")[["thrust_N"]]
-    eta_tt_plot = eta_tt_plot.rename(columns={"thrust_N": "Thrust [N]"})
-    st.line_chart(eta_tt_plot)
+    st.line_chart(
+        eta_tt_df,
+        x="swept_value",
+        y="thrust_N"
+    )
 
     # Plot 3: Thrust vs Turbine Inlet Temperature
     st.markdown("#### Thrust vs Turbine Inlet Temperature")
-    tit_plot = tit_df.set_index("swept_value")[["thrust_N"]]
-    tit_plot = tit_plot.rename(columns={"thrust_N": "Thrust [N]"})
-    st.line_chart(tit_plot)
+    st.line_chart(
+        tit_df,
+        x="swept_value",
+        y="thrust_N"
+    )
 
     # Plot 4: A9 Drift vs Compressor Efficiency
     st.markdown("#### A9 Drift vs Compressor Efficiency")
-    a9_eta_c_plot = eta_c_df.set_index("swept_value")[["A9_drift_percent"]]
-    a9_eta_c_plot = a9_eta_c_plot.rename(columns={"A9_drift_percent": "A9 Drift [%]"})
-    st.line_chart(a9_eta_c_plot)
+    st.line_chart(
+        eta_c_df,
+        x="swept_value",
+        y="A9_drift_percent"
+    )
 
     # Plot 5: NPR vs Combustor Pressure Loss
     st.markdown("#### NPR vs Combustor Pressure Loss")
-    npr_combustor_plot = combustor_loss_df.set_index("swept_value")[["NPR"]]
-    npr_combustor_plot = npr_combustor_plot.rename(columns={"NPR": "Nozzle Pressure Ratio"})
-    st.line_chart(npr_combustor_plot)
+    st.line_chart(
+        combustor_loss_df,
+        x="swept_value",
+        y="NPR"
+    )
 
 
 # Assumptions
