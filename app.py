@@ -56,7 +56,7 @@ inputs = CycleInputs(
     eta_tt=eta_tt,
     eta_m=eta_m,
     combustor_pressure_loss=combustor_pressure_loss,
-    Cv_nozzle=Cv_nozzle
+    Cv_nozzle=Cv_nozzle,
     fixed_A9=fixed_A9_m2
 )
 
@@ -233,60 +233,61 @@ if st.button("Run Sensitivity Sweeps"):
     sweep_rows = run_all_sweeps(inputs, fixed_A9)
     sweep_df = pd.DataFrame(sweep_rows)
 
-# ============================================================
-# Automatic Sensitivity Summary
-# ============================================================
+    # ============================================================
+    # Automatic Sensitivity Summary
+    # ============================================================
 
-worst_thrust_row = sweep_df.loc[sweep_df["thrust_N"].idxmin()]
-largest_A9_row = sweep_df.loc[sweep_df["A9_drift_percent"].abs().idxmax()]
-flag_count = int(sweep_df["A9_flag"].sum())
+    worst_thrust_row = sweep_df.loc[sweep_df["thrust_N"].idxmin()]
+    largest_A9_row = sweep_df.loc[sweep_df["A9_drift_percent"].abs().idxmax()]
+    flag_count = int(sweep_df["A9_flag"].sum())
 
-st.markdown("### Automatic Sweep Summary")
+    st.markdown("### Automatic Sweep Summary")
 
-summary_col1, summary_col2, summary_col3 = st.columns(3)
+    summary_col1, summary_col2, summary_col3 = st.columns(3)
 
-summary_col1.metric(
-    "Worst Thrust Case",
-    f"{worst_thrust_row['thrust_N']:.1f} N",
-    f"{worst_thrust_row['swept_variable']} = {worst_thrust_row['swept_value']}"
-)
-
-summary_col2.metric(
-    "Largest |A9 Drift|",
-    f"{largest_A9_row['A9_drift_percent']:.2f}%",
-    f"{largest_A9_row['swept_variable']} = {largest_A9_row['swept_value']}"
-)
-
-summary_col3.metric(
-    "Flagged Cases",
-    flag_count
-)
-
-st.markdown("### Sweep Conclusion")
-
-if flag_count > 0:
-    st.warning(
-        "Some sweep cases exceed the ±5% A9 drift limit. "
-        "These cases should be reviewed before freezing nozzle, turbine, or combustor geometry."
-    )
-else:
-    st.success(
-        "All sweep cases stayed within the ±5% A9 drift limit. "
-        "Based on this 1D model, the fixed exhaust area appears robust across the tested uncertainty range."
+    summary_col1.metric(
+        "Worst Thrust Case",
+        f"{worst_thrust_row['thrust_N']:.1f} N",
+        f"{worst_thrust_row['swept_variable']} = {worst_thrust_row['swept_value']}"
     )
 
-if worst_thrust_row["thrust_N"] < 760:
-    st.warning(
-        "At least one sweep case produces thrust significantly below the 800 N target. "
-        "The design is sensitive to one or more assumptions and should be reviewed."
-    )
-else:
-    st.success(
-        "The lowest thrust case remains reasonably close to the 800 N target across the tested sweeps."
+    summary_col2.metric(
+        "Largest |A9 Drift|",
+        f"{largest_A9_row['A9_drift_percent']:.2f}%",
+        f"{largest_A9_row['swept_variable']} = {largest_A9_row['swept_value']}"
     )
 
-st.markdown("### Full Sensitivity Sweep Table")
-st.dataframe(sweep_df, use_container_width=True)
+    summary_col3.metric(
+        "Flagged Cases",
+        flag_count
+    )
+
+    st.markdown("### Sweep Conclusion")
+
+    if flag_count > 0:
+        st.warning(
+            "Some sweep cases exceed the ±5% A9 drift limit. "
+            "These cases should be reviewed before freezing nozzle, turbine, or combustor geometry."
+        )
+    else:
+        st.success(
+            "All sweep cases stayed within the ±5% A9 drift limit. "
+            "Based on this 1D model, the fixed exhaust area appears robust across the tested uncertainty range."
+        )
+
+    if worst_thrust_row["thrust_N"] < 760:
+        st.warning(
+            "At least one sweep case produces thrust significantly below the 800 N target. "
+            "The design is sensitive to one or more assumptions and should be reviewed."
+        )
+    else:
+        st.success(
+            "The lowest thrust case remains reasonably close to the 800 N target across the tested sweeps."
+        )
+
+    st.markdown("### Full Sensitivity Sweep Table")
+    st.dataframe(sweep_df, use_container_width=True)
+
     st.download_button(
         label="Download sensitivity_sweeps.csv",
         data=sweep_df.to_csv(index=False),
