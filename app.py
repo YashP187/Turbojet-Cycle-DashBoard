@@ -66,12 +66,13 @@ results = run_cycle(inputs)
 # Main results
 st.subheader("Main Results")
 
-col1, col2, col3, col4 = st.columns(4)
+col1, col2, col3, col4, col5 = st.columns(5)
 
 col1.metric("Thrust [N]", f"{results['gross_thrust_N']:.1f}")
 col2.metric("Jet velocity V9 [m/s]", f"{results['V9_m_per_s']:.1f}")
 col3.metric("NPR", f"{results['NPR_P05_over_Pamb']:.3f}")
-col4.metric("Nozzle state", results["nozzle_state"])
+col4.metric("M9", f"{results['M9']:.3f}")
+col5.metric("Nozzle state", results["nozzle_state"])
 
 col5, col6, col7, col8 = st.columns(4)
 
@@ -156,30 +157,35 @@ station_data = [
         "Location": "Compressor inlet",
         "Temperature [K]": results["T02_K"],
         "Pressure [kPa]": results["P02_kPa"],
+        "Mach": "-",
     },
     {
         "Station": "03",
         "Location": "Compressor exit / combustor inlet",
         "Temperature [K]": results["T03_K"],
         "Pressure [kPa]": results["P03_kPa"],
+        "Mach": "-",
     },
     {
         "Station": "04",
         "Location": "Combustor exit / turbine inlet",
         "Temperature [K]": results["T04_K"],
         "Pressure [kPa]": results["P04_kPa"],
+        "Mach": "-",
     },
     {
         "Station": "05",
         "Location": "Turbine exit / nozzle inlet",
         "Temperature [K]": results["T05_K"],
         "Pressure [kPa]": results["P05_kPa"],
+        "Mach": "-",
     },
     {
         "Station": "09",
         "Location": "Nozzle exit",
         "Temperature [K]": results["T9_K"],
         "Pressure [kPa]": results["P9_kPa"],
+        "Mach": results["M9"],
     },
 ]
 
@@ -351,7 +357,48 @@ if st.button("Run Sensitivity Sweeps"):
         y="NPR"
     )
 
+st.subheader("Project Completion Checklist")
 
+checklist_data = [
+    {
+        "Requirement": "Design-point calculator runs",
+        "Status": "Complete",
+        "Notes": "Dashboard updates when input sliders are changed."
+    },
+    {
+        "Requirement": "Frozen design-point comparison",
+        "Status": "Complete",
+        "Notes": "Compares thrust, T05, P05, and NPR against frozen values."
+    },
+    {
+        "Requirement": "Sensitivity sweeps",
+        "Status": "Complete",
+        "Notes": "Sweeps compressor efficiency, turbine efficiency, mass flow, TIT, combustor loss, and nozzle Cv."
+    },
+    {
+        "Requirement": "A9 geometry flag",
+        "Status": "Complete",
+        "Notes": "Flags cases where required A9 drifts more than ±5% from fixed A9."
+    },
+    {
+        "Requirement": "Plain-English sweep conclusion",
+        "Status": "Complete",
+        "Notes": "Automatically summarizes flagged cases and low-thrust cases."
+    },
+    {
+        "Requirement": "Second team member check",
+        "Status": "Pending",
+        "Notes": "Have another team member verify the frozen design comparison table."
+    },
+    {
+        "Requirement": "Shared folder / change log",
+        "Status": "Pending",
+        "Notes": "Add GitHub commits or a small change log for version tracking."
+    },
+]
+
+checklist_df = pd.DataFrame(checklist_data)
+st.dataframe(checklist_df, use_container_width=True)
 # Assumptions
 st.subheader("Model Assumptions")
 
