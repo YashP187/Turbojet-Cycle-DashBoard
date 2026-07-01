@@ -31,6 +31,15 @@ eta_m = st.sidebar.slider("Mechanical efficiency ηm", 0.80, 1.00, 0.93, 0.005)
 
 combustor_pressure_loss = st.sidebar.slider("Combustor pressure loss", 0.00, 0.25, 0.10, 0.005)
 Cv_nozzle = st.sidebar.slider("Nozzle velocity coefficient Cv", 0.85, 1.00, 1.00, 0.005)
+fixed_A9_cm2 = st.sidebar.number_input(
+    "Fixed exhaust area A9 [cm²]",
+    value=87.0,
+    min_value=1.0,
+    max_value=300.0,
+    step=0.1
+)
+
+fixed_A9_m2 = fixed_A9_cm2 / 10000.0
 
 T02 = st.sidebar.number_input("Compressor inlet temperature T02 [K]", value=288.0)
 P02 = st.sidebar.number_input("Compressor inlet pressure P02 [kPa]", value=101.325)
@@ -48,6 +57,7 @@ inputs = CycleInputs(
     eta_m=eta_m,
     combustor_pressure_loss=combustor_pressure_loss,
     Cv_nozzle=Cv_nozzle
+    fixed_A9=fixed_A9_m2
 )
 
 results = run_cycle(inputs)
@@ -219,13 +229,64 @@ st.dataframe(work_df, use_container_width=True)
 st.subheader("Sensitivity Sweeps")
 
 if st.button("Run Sensitivity Sweeps"):
-    fixed_A9 = results["A9_required_m2"]
+    fixed_A9 = fixed_A9_m2
     sweep_rows = run_all_sweeps(inputs, fixed_A9)
     sweep_df = pd.DataFrame(sweep_rows)
 
-    st.markdown("### Full Sensitivity Sweep Table")
-    st.dataframe(sweep_df, use_container_width=True)
+# ============================================================
+# Automatic Sensitivity Summary
+# ============================================================
 
+worst_thrust_row = sweep_df.loc[sweep_df["thrust_N"].idxmin()]
+largest_A9_row = sweep_df.loc[sweep_df["A9_drift_percent"].abs().idxmax()]
+flag_count = int(sweep_df["A9_flag"].sum())
+
+st.markdown("### Automatic Sweep Summary")
+
+summary_col1, summary_col2, summary_col3 = st.columns(3)
+
+summary_col1.metric(
+    "Worst Thrust Case",
+    f"{worst_thrust_row['thrust_N']:.1f} N",
+    f"{worst_thrust_row['swept_variable']} = {worst_thrust_row['swept_value']}"
+)
+
+summary_col2.metric(
+    "Largest |A9 Drift|",
+    f"{largest_A9_row['A9_drift_percent']:.2f}%",
+    f"{largest_A9_row['swept_variable']} = {largest_A9_row['swept_value']}"
+)
+
+summary_col3.metric(
+    "Flagged Cases",
+    flag_count
+)
+
+st.markdown("### Sweep Conclusion")
+
+if flag_count > 0:
+    st.warning(
+        "Some sweep cases exceed the ±5% A9 drift limit. "
+        "These cases should be reviewed before freezing nozzle, turbine, or combustor geometry."
+    )
+else:
+    st.success(
+        "All sweep cases stayed within the ±5% A9 drift limit. "
+        "Based on this 1D model, the fixed exhaust area appears robust across the tested uncertainty range."
+    )
+
+if worst_thrust_row["thrust_N"] < 760:
+    st.warning(
+        "At least one sweep case produces thrust significantly below the 800 N target. "
+        "The design is sensitive to one or more assumptions and should be reviewed."
+    )
+else:
+    st.success(
+        "The lowest thrust case remains reasonably close to the 800 N target across the tested sweeps."
+    )
+
+st.markdown("### Full Sensitivity Sweep Table")
+st.dataframe(sweep_df, use_container_width=True)
     st.download_button(
         label="Download sensitivity_sweeps.csv",
         data=sweep_df.to_csv(index=False),
